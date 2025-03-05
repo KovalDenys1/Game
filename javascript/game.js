@@ -2,10 +2,14 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+const gameWidth = 320;
+const gameHeight = 180;
 // Resize canvas to fit screen size
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const scale = Math.min(window.innerWidth / gameWidth, window.innerHeight / gameHeight);
+  canvas.width = gameWidth * scale;
+  canvas.height = gameHeight * scale;
+  ctx.imageSmoothingEnabled = false; // Отключаем сглаживание (важно для пиксельных игр)
 }
 
 resizeCanvas(); // Initial resize
@@ -171,6 +175,14 @@ function attackPlayer() {
       resetGame();
     }
   }
+}
+
+// Add attack animations and effects
+function drawAttackEffect(x, y) {
+  ctx.fillStyle = 'yellow';
+  ctx.beginPath();
+  ctx.arc(x, y, 20, 0, 2 * Math.PI);
+  ctx.fill();
 }
 
 // Draw game elements
