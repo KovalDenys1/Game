@@ -4,17 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Menu - 2D Battle Game</title>
-  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  <div id="menu">
-    <button id="gameBtn">Game</button>
-    <button id="shopBtn">Shop</button>
-    <button id="heroBtn">Hero</button>
-    <button id="settingsBtn">Settings</button>
-    <button id="exitBtn">Exit</button>
+  <div class="canvas-container">
+    <canvas id="main_screen" width="816" height="480"></canvas>
   </div>
-
-  <script src="javascript/menu.js"></script>
+  <audio id="theAudio">
+    <source src="assets/moonlight.mp3" type="audio/mp3">
+  </audio>
+  <script src="javascript/main.js"></script>
 </body>
 </html>
