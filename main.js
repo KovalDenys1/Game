@@ -25,6 +25,7 @@ let attackKey;
 let coins;
 let score = 0;
 let scoreText;
+let currentLevel = 1; // Текущий уровень
 
 function preload() {
     this.load.image('map', 'assets/map.png');
@@ -43,59 +44,72 @@ function create() {
     
     attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    enemies = this.physics.add.group({
-        key: 'enemy',
-        repeat: 4,
-        setXY: { x: 100, y: 100, stepX: 150 }
-    });
+    enemies = this.physics.add.group();
 
-    enemies.children.iterate(function (enemy) {
-        enemy.setCollideWorldBounds(true);
-        enemy.setBounce(1);
-        enemy.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
-        enemy.health = 3;
-        enemy.healthBar = this.add.graphics();
-        updateHealthBar(enemy);
-    }, this);
+    coins = this.physics.add.group();
 
     this.physics.add.collider(player, enemies);
     
     this.physics.add.overlap(player, enemies, handlePlayerEnemyCollision);
 
-    coins = this.physics.add.group({
-        key: 'coin',
-        repeat: 9,
-        setXY: { x: Phaser.Math.Between(50, 750), y: Phaser.Math.Between(50, 550) }
-    });
-
     this.physics.add.overlap(player, coins, collectCoin, null, this);
 
-    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#ffffff' });
+    scoreText = this.add.text(16, 16, 'Score: ' + score + '\nLevel: ' + currentLevel,
+                              { fontSize: '32px', fill: '#ffffff' });
+
+    // Запускаем спавнер врагов
+    this.time.addEvent({
+        delay: 2000, // Каждые 2 секунды
+        callback: spawnEnemy,
+        callbackScope: this,
+        loop: true
+    });
+}
+
+function spawnEnemy() {
+    const x = Phaser.Math.Between(50, 750);
+    const y = Phaser.Math.Between(50, 550);
+
+    let enemy = enemies.create(x, y, 'enemy');
+    enemy.setCollideWorldBounds(true);
+    enemy.setBounce(1);
+    enemy.setVelocity(
+        Phaser.Math.Between(-100 - currentLevel * 10, 100 + currentLevel * 10),
+        Phaser.Math.Between(-100 - currentLevel * 10, 100 + currentLevel * 10)
+    );
+    enemy.health = currentLevel + 3; // Увеличиваем здоровье врагов с каждым уровнем
+    enemy.healthBar = this.add.graphics();
 }
 
 function collectCoin(player, coin) {
-    coin.disableBody(true, true); // Отключаем физическое тело и делаем монету невидимой
-    score += 10; // Увеличиваем счёт на 10 очков
-    scoreText.setText('Score: ' + score); // Обновляем текст очков
+   coin.disableBody(true, true); // Убираем монету с карты
+   score += 10; // Увеличиваем счёт на фиксированное значение
+   scoreText.setText('Score: ' + score + '\nLevel: ' + currentLevel); // Обновляем текст очков и уровня
 }
 
 function attackEnemies() {
-    enemies.children.iterate(function (enemy) {
-        if (!enemy.active || !enemy.body) return; // Пропускаем уничтоженных врагов
+   enemies.children.iterate(function (enemy) {
+       if (!enemy.active || !enemy.body) return;
 
-        const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+       const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
 
-        if (distance < 50) { // Если враг находится в радиусе атаки
-            enemy.health -= 1; // Уменьшаем здоровье врага
-            updateHealthBar(enemy);
+       if (distance < 50) { 
+           enemy.health -= 1; 
+           updateHealthBar(enemy);
 
-            if (enemy.health <= 0) {
-                enemy.healthBar.clear(); // Удаляем полоску здоровья
-                enemy.setActive(false).setVisible(false); // Делаем врага неактивным и невидимым
-                console.log('Враг уничтожен!');
-            }
-        }
-    });
+           if (enemy.health <= 0) {
+               enemy.healthBar.clear();
+               enemy.setActive(false).setVisible(false);
+
+               // Выпадение монет
+               for (let i = 0; i < currentLevel; i++) { // Количество монет зависит от уровня
+                   let coin = coins.create(enemy.x, enemy.y, 'coin'); // Монета остаётся на месте
+               }
+
+               console.log('Враг уничтожен!');
+           }
+       }
+   });
 }
 
 function updateHealthBar(enemy) {
@@ -107,11 +121,7 @@ function updateHealthBar(enemy) {
    enemy.healthBar.clear();
 
    enemy.healthBar.fillStyle(0xff0000);
-   enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - 20, barWidth, barHeight);
-
-   const healthPercentage = Math.max(enemy.health / 3, 0);
-   enemy.healthBar.fillStyle(0x00ff00);
-   enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - 20, barWidth * healthPercentage, barHeight);
+   enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - barHeight - 20, barWidth * (enemy.health / (currentLevel + 3)), barHeight);
 }
 
 function handlePlayerEnemyCollision(player, enemy) {
@@ -144,9 +154,9 @@ function update() {
 
        const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
 
-       if (distance < 150) {
-           const velocityX = (player.x - enemy.x) * 0.5;
-           const velocityY = (player.y - enemy.y) * 0.5;
+       if (distance < 150) { 
+           const velocityX = (player.x - enemy.x) * 0.75;
+           const velocityY = (player.y - enemy.y) * 0.75;
            enemy.setVelocity(velocityX, velocityY);
        }
    });
