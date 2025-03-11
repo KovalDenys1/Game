@@ -22,28 +22,27 @@ let player;
 let cursors;
 let enemies;
 let attackKey;
+let coins;
+let score = 0;
+let scoreText;
 
 function preload() {
     this.load.image('map', 'assets/map.png');
     this.load.image('player', 'assets/player.png');
     this.load.image('enemy', 'assets/enemy.png');
+    this.load.image('coin', 'assets/coin.png');
 }
 
 function create() {
-    // Добавляем карту
     this.add.image(400, 300, 'map');
 
-    // Создаем персонажа
     player = this.physics.add.sprite(400, 300, 'player');
     player.setCollideWorldBounds(true);
 
-    // Настраиваем управление
     cursors = this.input.keyboard.createCursorKeys();
     
-    // Настраиваем клавишу атаки
     attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    // Создаем группу врагов
     enemies = this.physics.add.group({
         key: 'enemy',
         repeat: 4,
@@ -54,19 +53,30 @@ function create() {
         enemy.setCollideWorldBounds(true);
         enemy.setBounce(1);
         enemy.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
-
-        enemy.health = 3; // Устанавливаем здоровье врага
-
-        // Добавляем полосу здоровья
+        enemy.health = 3;
         enemy.healthBar = this.add.graphics();
         updateHealthBar(enemy);
     }, this);
 
-    // Коллизия между игроком и врагами
     this.physics.add.collider(player, enemies);
-
-    // Обработка столкновений (перекрытий) между игроком и врагами
+    
     this.physics.add.overlap(player, enemies, handlePlayerEnemyCollision);
+
+    coins = this.physics.add.group({
+        key: 'coin',
+        repeat: 9,
+        setXY: { x: Phaser.Math.Between(50, 750), y: Phaser.Math.Between(50, 550) }
+    });
+
+    this.physics.add.overlap(player, coins, collectCoin, null, this);
+
+    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#ffffff' });
+}
+
+function collectCoin(player, coin) {
+    coin.disableBody(true, true); // Отключаем физическое тело и делаем монету невидимой
+    score += 10; // Увеличиваем счёт на 10 очков
+    scoreText.setText('Score: ' + score); // Обновляем текст очков
 }
 
 function attackEnemies() {
@@ -77,13 +87,11 @@ function attackEnemies() {
 
         if (distance < 50) { // Если враг находится в радиусе атаки
             enemy.health -= 1; // Уменьшаем здоровье врага
-            console.log(`Враг получил урон! Осталось здоровья: ${enemy.health}`);
-
-            updateHealthBar(enemy); // Обновляем полосу здоровья
+            updateHealthBar(enemy);
 
             if (enemy.health <= 0) {
-                enemy.healthBar.destroy(); // Уничтожаем полосу здоровья
-                enemies.killAndHide(enemy); // Скрываем врага и убираем из физического мира
+                enemy.healthBar.clear(); // Удаляем полоску здоровья
+                enemy.setActive(false).setVisible(false); // Делаем врага неактивным и невидимым
                 console.log('Враг уничтожен!');
             }
         }
@@ -91,57 +99,55 @@ function attackEnemies() {
 }
 
 function updateHealthBar(enemy) {
-    if (!enemy.active || !enemy.body) return; // Пропускаем уничтоженных врагов
+   if (!enemy.active || !enemy.body) return;
 
-    const barWidth = 40;
-    const barHeight = 5;
+   const barWidth = 40;
+   const barHeight = 5;
 
-    enemy.healthBar.clear();
+   enemy.healthBar.clear();
 
-    // Фон полосы здоровья (красный)
-    enemy.healthBar.fillStyle(0xff0000);
-    enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - 20, barWidth, barHeight);
+   enemy.healthBar.fillStyle(0xff0000);
+   enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - 20, barWidth, barHeight);
 
-    // Текущая полоса здоровья (зелёный)
-    const healthPercentage = Math.max(enemy.health / 3, 0); // Защита от отрицательных значений
-    enemy.healthBar.fillStyle(0x00ff00);
-    enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - 20, barWidth * healthPercentage, barHeight);
+   const healthPercentage = Math.max(enemy.health / 3, 0);
+   enemy.healthBar.fillStyle(0x00ff00);
+   enemy.healthBar.fillRect(enemy.x - barWidth / 2, enemy.y - 20, barWidth * healthPercentage, barHeight);
 }
 
 function handlePlayerEnemyCollision(player, enemy) {
-    console.log('Столкновение с врагом!');
+   console.log('Столкновение с врагом!');
 }
 
 function update() {
-    player.setVelocity(0);
+   player.setVelocity(0);
 
-    if (cursors.left.isDown) {
-        player.setVelocityX(-200);
-    } else if (cursors.right.isDown) {
-        player.setVelocityX(200);
-    }
+   if (cursors.left.isDown) {
+       player.setVelocityX(-200);
+   } else if (cursors.right.isDown) {
+       player.setVelocityX(200);
+   }
 
-    if (cursors.up.isDown) {
-        player.setVelocityY(-200);
-    } else if (cursors.down.isDown) {
-        player.setVelocityY(200);
-    }
+   if (cursors.up.isDown) {
+       player.setVelocityY(-200);
+   } else if (cursors.down.isDown) {
+       player.setVelocityY(200);
+   }
 
-    if (Phaser.Input.Keyboard.JustDown(attackKey)) {
-        attackEnemies();
-    }
+   if (Phaser.Input.Keyboard.JustDown(attackKey)) {
+       attackEnemies();
+   }
 
-    enemies.children.iterate(function (enemy) {
-        if (!enemy.active || !enemy.body) return; // Пропускаем уничтоженных врагов
+   enemies.children.iterate(function (enemy) {
+       if (!enemy.active || !enemy.body) return;
 
-        updateHealthBar(enemy); // Обновляем полосу здоровья
+       updateHealthBar(enemy);
 
-        const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+       const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
 
-        if (distance < 150) { // Если игрок рядом с врагом (<150 пикселей)
-            const velocityX = (player.x - enemy.x) * 0.5;
-            const velocityY = (player.y - enemy.y) * 0.5;
-            enemy.setVelocity(velocityX, velocityY); // Враг движется к игроку
-        }
-    });
+       if (distance < 150) {
+           const velocityX = (player.x - enemy.x) * 0.5;
+           const velocityY = (player.y - enemy.y) * 0.5;
+           enemy.setVelocity(velocityX, velocityY);
+       }
+   });
 }
