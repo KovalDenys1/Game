@@ -54,7 +54,13 @@ function create() {
 
     // Группы врагов и монет
     enemies = this.physics.add.group();
-    coins = this.physics.add.group({ maxSize: 100 }); // Пул монет
+    coins = this.physics.add.group({
+        maxSize: 100,
+        createCallback: function (coin) {
+            coin.setActive(true).setVisible(true);
+        }
+    });
+    
 
     // Физические взаимодействия
     this.physics.add.collider(player, enemies);
@@ -122,7 +128,7 @@ function updateScoreText() {
 // Атака врагов игроком
 function attackEnemies() {
    enemies.children.iterate(function (enemy) {
-       if (!enemy.active || !enemy.body) return;
+    if (!enemy || !enemy.active || !enemy.body) return;
        attackEnemy(enemy);
    });
 }
@@ -143,7 +149,7 @@ function attackEnemy(enemy) {
 
 // Уничтожение врага и спавн монет
 function destroyEnemy(enemy) {
-   enemy.healthBar.clear();
+    enemy.healthBar.destroy();
    enemy.setActive(false).setVisible(false);
    spawnCoins(enemy.x, enemy.y, currentLevel);
    console.log('Враг уничтожен!');
@@ -162,7 +168,7 @@ function spawnCoins(x, y, count) {
 
 // Обновление полосы здоровья врага
 function updateHealthBar(enemy) {
-   if (!enemy.active || !enemy.body) return;
+    if (!enemy || !enemy.active || !enemy.body) return;
 
    const barWidth = 40;
    const barHeight = 5;
@@ -172,8 +178,7 @@ function updateHealthBar(enemy) {
    enemy.healthBar.fillRect(
        enemy.x - barWidth / 2,
        enemy.y - barHeight - 20,
-       barWidth * (enemy.health / (currentLevel + 3)),
-       barHeight
+       barWidth * (enemy.health / (currentLevel + 3)), barHeight
    );
 }
 
@@ -211,7 +216,7 @@ function update() {
 // Обновление состояния врагов на каждом кадре
 function updateEnemies() {
    enemies.children.iterate(function (enemy) {
-       if (!enemy.active || !enemy.body) return;
+    if (!enemy || !enemy.active || !enemy.body) return;
 
        const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
 
