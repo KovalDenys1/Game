@@ -11,19 +11,19 @@ export default class MenuScene extends Phaser.Scene {
     create() {
         this.add.image(400, 300, 'background');
 
-        this.createButton(400, 200, 'Игра', () => {
+        this.createButton(400, 200, 'Game', () => {
             this.scene.start('MapScene'); // Переход на карту
         });
 
-        this.createButton(400, 300, 'Персонаж', () => {
+        this.createButton(400, 300, 'Hero', () => {
             this.scene.start('CharacterScene'); // Переход в меню персонажа
         });
 
-        this.createButton(400, 400, 'Магазин', () => {
+        this.createButton(400, 400, 'Shop', () => {
             this.scene.start('ShopScene'); // Переход в магазин
         });
 
-        this.createButton(400, 500, 'Настройки', () => {
+        this.createButton(400, 500, 'Settings', () => {
             this.scene.start('SettingsScene'); // Переход в настройки
         });
     }

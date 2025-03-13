@@ -5,18 +5,19 @@ export default class ArenaScene extends Phaser.Scene {
 
     preload() {
         // Загрузка ресурсов
-        this.load.image('map', 'assets/map.png');
-        this.load.image('player', 'assets/player.png');
-        this.load.image('enemy', 'assets/enemy.png');
-        this.load.image('coin', 'assets/coin.png');
+        this.load.image('map', './assets/map.png');
+        this.load.image('player', './assets/player.png');
+        this.load.image('enemy', './assets/enemy.png');
+        this.load.image('coin', './assets/coin.png');
     }
 
     create() {
         // Фон
+        console.log('ArenaScene создана');
         this.add.image(400, 300, 'map');
 
         // Игрок
-        this.player = this.physics.add.sprite(400, 300, 'player'); // Используем this.player
+        this.player = this.physics.add.sprite(400, 300, 'player');
         this.player.setCollideWorldBounds(true);
 
         // Управление
@@ -51,7 +52,9 @@ export default class ArenaScene extends Phaser.Scene {
         // Таймер для спавна врагов
         this.time.addEvent({
             delay: 2000,
-            callback: this.spawnEnemy,
+            callback: () => { 
+                this.spawnEnemy(); 
+            },
             callbackScope: this,
             loop: true
         });
@@ -94,14 +97,8 @@ export default class ArenaScene extends Phaser.Scene {
     }
 
     attackEnemies() {
-       // Атака врагов игроком
-       console.log("Атака врагов");
-       if (!this.enemies) return;
-
-       // Проверяем каждого врага в группе
        this.enemies.children.iterate((enemy) => {
            if (!enemy || !enemy.active || !enemy.body) return;
-
            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
 
            if (distance < 50) { 
@@ -129,17 +126,10 @@ export default class ArenaScene extends Phaser.Scene {
        if (this.cursors.up.isDown) velocityY = -200;
        else if (this.cursors.down.isDown) velocityY = 200;
 
-       // Используем корректное обращение к игроку через "this"
-       if (this.player) {
-           this.player.setVelocity(velocityX, velocityY);
-       }
+       player.setVelocity(velocityX, velocityY);
 
        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
-           // Вызов метода атаки врагов
-           if (typeof(this.attackEnemies) === "function") {
-               console.log("Игрок атакует");
-               return;
-           }
+           attackEnemies();
        }
    }
 }
